@@ -26,7 +26,7 @@ class Helper:
         return index.upsert(
             vectors=vectors,
             namespace=namespace
-        )
+        ).to_dict()
 
     def query_method(self, vector_list, top_k=10, index_name="test1", namespace="ns1"):
         while not pc.describe_index(index_name).status['ready']:
@@ -50,7 +50,7 @@ class Helper:
                     result.append(match['metadata']['sentence'])
                     seen_ids.add(match['id'])
 
-        return result
+        return {'similar_sentences' : result}
     
     def embed_sentences(self, sentences):
         embeddings = model.encode(sentences)
