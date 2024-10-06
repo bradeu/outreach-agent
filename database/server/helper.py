@@ -28,18 +28,29 @@ class Helper:
             namespace=namespace
         )
 
-    def query_method(self, vector, index_name="test1", namespace="ns1"):
+    def query_method(self, vector, top_k=10, index_name="test1", namespace="ns1"):
         while not pc.describe_index(index_name).status['ready']:
             time.sleep(1)
 
         index = pc.Index(index_name)
+        
+        result = []
+        seen_ids = set()
+        for v in vector:
+            res = index.query(
+                namespace=namespace,
+                vector=v.tolist(),
+                top_k=top_k,
+                include_values=True,
+                include_metadata=True,
+            )
 
-        return index.query(
-            namespace=namespace,
-            vector=vector,
-            include_values=True,
-            include_metadata=True,
-        )
+            for match in res['matches']:
+                if match['id'] not in seen_ids:
+                    result.append(match)
+                    seen_ids.add(match['id'])
+
+        return result
     
     def embed_sentences(self, sentences):
         embeddings = model.encode(sentences)
