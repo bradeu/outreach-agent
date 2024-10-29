@@ -2,15 +2,24 @@ import os
 from dotenv import load_dotenv
 from pinecone import Pinecone
 import time
-from nltk.tokenize import sent_tokenize
+# from nltk.tokenize import sent_tokenize
 from sentence_transformers import SentenceTransformer
 import uuid
+from langchain_experimental.text_splitter import SemanticChunker
+from langchain_openai.embeddings import OpenAIEmbeddings
+# from semantic_router.encoders import OpenAIEncoder
+# from semantic_chunkers import StatisticalChunker
+
 
 load_dotenv()
 
-api_key = os.getenv('API_KEY')
-pc = Pinecone(api_key=api_key)
+pinecone_api_key = os.getenv('PINECONE_API_KEY')
+openai_api_key = os.getenv('OPENAI_API_KEY')
+
+pc = Pinecone(api_key=pinecone_api_key)
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+open_ai_embedding = OpenAIEmbeddings(openai_api_key=openai_api_key)
+text_splitter = SemanticChunker(open_ai_embedding, breakpoint_threshold_type="gradient")
 
 class Helper:
     def upsert_method(self, vector_list, index_name="test1", namespace="ns1"):
@@ -60,7 +69,12 @@ class Helper:
         return embed_list
 
     def split_text_into_sentences(self, text):
-        sentences = sent_tokenize(text)
+        # chunks = chunker(docs=[text])
+        # sentences = sent_tokenize(text)
+        docs = text_splitter.create_documents([text])
+        sentences = []
+        for doc in docs:
+            sentences.append(doc.page_content)
         return sentences
     
 helper_obj = Helper()
