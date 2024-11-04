@@ -7,6 +7,7 @@ from sentence_transformers import SentenceTransformer
 import uuid
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
+import requests
 # from semantic_router.encoders import OpenAIEncoder
 # from semantic_chunkers import StatisticalChunker
 
@@ -15,6 +16,7 @@ load_dotenv()
 
 pinecone_api_key = os.getenv('PINECONE_API_KEY')
 openai_api_key = os.getenv('OPENAI_API_KEY')
+perplexity_api_key = os.getenv('PERPLEXITY_API_KEY')
 
 pc = Pinecone(api_key=pinecone_api_key)
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
@@ -76,5 +78,15 @@ class Helper:
         for doc in docs:
             sentences.append(doc.page_content)
         return sentences
+
+    def send_to_perplexity(self, user_query):
+        headers = {
+            "Authorization": f"Bearer {perplexity_api_key}",
+            "Content-Type": "application/json"
+        }
+        response = requests.get("https://api.perplexity.ai/search", headers=headers, params={"query": user_query})
+        perplexity_data = response.json()
+        real_time_answer = perplexity_data.get("answer")
+        return real_time_answer
     
 helper_obj = Helper()
