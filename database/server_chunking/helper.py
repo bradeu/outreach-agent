@@ -11,7 +11,6 @@ import requests
 # from semantic_router.encoders import OpenAIEncoder
 # from semantic_chunkers import StatisticalChunker
 
-
 load_dotenv()
 
 pinecone_api_key = os.getenv('PINECONE_API_KEY')
@@ -24,7 +23,7 @@ open_ai_embedding = OpenAIEmbeddings(openai_api_key=openai_api_key)
 text_splitter = SemanticChunker(open_ai_embedding, breakpoint_threshold_type="gradient")
 
 class Helper:
-    def upsert_method(self, vector_list, index_name="test1", namespace="ns1"):
+    def upsert_method(self, vector_list, index_name="test2", namespace="ns1"):
         while not pc.describe_index(index_name).status['ready']:
             time.sleep(1)
 
@@ -39,7 +38,7 @@ class Helper:
             namespace=namespace
         ).to_dict()
 
-    def query_method(self, vector_list, top_k=10, index_name="test1", namespace="ns1"):
+    def query_method(self, vector_list, top_k=10, index_name="test2", namespace="ns1"):
         while not pc.describe_index(index_name).status['ready']:
             time.sleep(1)
 
@@ -50,7 +49,7 @@ class Helper:
         for v in vector_list:
             res = index.query(
                 namespace=namespace,
-                vector=v['embedding'].tolist(),
+                vector=v['embedding'],
                 top_k=top_k,
                 include_values=True,
                 include_metadata=True,
@@ -70,6 +69,13 @@ class Helper:
             embed_list.append({'embedding' : embeddings[i], 'sentence' : sentences[i]})
         return embed_list
 
+    def embed_sentences_openai(self, sentences):
+        embed_list = []
+        for i in range(len(sentences)):
+            embedding = open_ai_embedding.embed_query(sentences[i])
+            embed_list.append({'embedding' : embedding, 'sentence' : sentences[i]})
+        return embed_list
+
     def split_text_into_sentences(self, text):
         # chunks = chunker(docs=[text])
         # sentences = sent_tokenize(text)
@@ -80,13 +86,39 @@ class Helper:
         return sentences
 
     def send_to_perplexity(self, user_query):
+        url = "https://api.perplexity.ai/chat/completions"
+
+        system_content = (
+            "Your task is to improve the following user queries to make them more effective for "
+            "searching in a vector database using OpenAIEmbeddings with a vector dimension of 1536.\n\n"
+            "Instructions:\n"
+            "- Rewrite the query to include related terms if they improve relevance.\n"
+            "- Resolve any ambiguous terms to make the query more specific.\n"
+            "- Focus on key concepts related to the user's intent.\n\n"
+            "Return only the optimized query. Do not provide an answer to the question."
+        )
+
+        payload = {
+            "model": "llama-3.1-sonar-small-128k-chat",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": system_content
+                },
+                {
+                    "role": "user",
+                    "content": user_query
+                }
+            ],
+            "max_tokens": 200,
+        }
         headers = {
             "Authorization": f"Bearer {perplexity_api_key}",
             "Content-Type": "application/json"
         }
-        response = requests.get("https://api.perplexity.ai/search", headers=headers, params={"query": user_query})
+
+        response = requests.request("POST", url, json=payload, headers=headers)
         perplexity_data = response.json()
-        real_time_answer = perplexity_data.get("answer")
-        return real_time_answer
+        return perplexity_data['choices'][0].get('message').get('content')
     
 helper_obj = Helper()
