@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from helper import helper_obj
+from helper.database_helper import helper_obj
 
 app = FastAPI()
 
