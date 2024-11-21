@@ -11,7 +11,7 @@ import requests
 # from semantic_router.encoders import OpenAIEncoder
 # from semantic_chunkers import StatisticalChunker
 
-load_dotenv()
+_ = load_dotenv()
 
 pinecone_api_key = os.getenv('PINECONE_API_KEY')
 openai_api_key = os.getenv('OPENAI_API_KEY')
@@ -121,4 +121,4 @@ class Helper:
         perplexity_data = response.json()
         return perplexity_data['choices'][0].get('message').get('content')
     
-helper_obj = Helper()
+db_helper_obj = Helper()
