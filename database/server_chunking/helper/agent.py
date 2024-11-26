@@ -23,7 +23,7 @@ class Agent:
         self.graph = graph.compile()
         self.tools = {t.name: t for t in tools}
         self.model_query = model_query.bind_tools(tools)
-        self.model_filter = model_filter.bind_tools(tools)
+        # self.model_filter = model_filter.bind_tools(tools)
         self.top_k = top_k
 
     def exists_action(self, state: AgentState):

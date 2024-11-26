@@ -1,6 +1,10 @@
 from helper.pinecone import db_helper_obj
 
 class QueryTool:
+
+    def __init__(self):
+        self.name = "query_tool"
+
     def invoke(self, sub_queries, top_k):
         res = []
 
