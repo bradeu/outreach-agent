@@ -12,10 +12,9 @@ class AgentState(TypedDict):
 class Agent:
 
     def __init__(self, model_query, model_filter, tools, top_k):
-        self.system_query = "Decompose the following query into simpler parts"
         graph = StateGraph(AgentState)
         graph.add_node("llm_query", self.call_openai_query)
-        graph.add_node("action", self.take_action)
+        graph.add_node("action", self.take_action) # call it search/ or rag
         graph.add_node("llm_filter", self.call_openai_filter)
         graph.add_edge("llm_query", "action")
         graph.add_edge("action", "llm_filter")
@@ -23,7 +22,7 @@ class Agent:
         self.graph = graph.compile()
         self.tools = {t.name: t for t in tools}
         self.model_query = model_query.bind_tools(tools)
-        # self.model_filter = model_filter.bind_tools(tools)
+        self.model_filter = model_filter
         self.top_k = top_k
 
     def exists_action(self, state: AgentState):
@@ -31,14 +30,16 @@ class Agent:
         return len(result.tool_calls) > 0
 
     def call_openai_query(self, state: AgentState):
-        messages = state['messages']
-        messages = [SystemMessage(content=self.system_query)] + messages
+        messages = state['messages'][0] # messages = state['messages']
+        system_query = "Decompose the following query into simpler parts"
+
+        messages = [SystemMessage(content=system_query)] + messages
         message = self.model_query.invoke(messages)
         return {'messages': [message]}
     
     def call_openai_filter(self, state: AgentState):
         query = state['messages'][0].content
-        system_filter = f"Filter the following results based on the given query:{query}."
+        system_filter = f"Filter and summarize the following results based on the given query:{query}."
 
         messages = state['messages'][-1]
         messages = [SystemMessage(content=system_filter)] + messages

@@ -7,7 +7,7 @@ class Inference:
 
     def query_workflow(user_query, top_k):
         tool = query_tool_obj
-        model = ChatOpenAI(model="gpt-3.5-turbo")
+        model = ChatOpenAI(model="gpt-3.5-turbo") #change to 4.0 mini
         abot = Agent(model, model, [tool], top_k)
 
         messages = [HumanMessage(content=user_query)]

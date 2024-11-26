@@ -1,22 +1,28 @@
 from helper.pinecone import db_helper_obj
+from langchain_core.tools import tool
+from langchain_core.messages import ToolMessage
 
-class QueryTool:
+@tool
+def query_tool(self, args: dict) -> ToolMessage:
+    sub_queries = args.get("sub_queries", [])
+    top_k = args.get("top_k", None)
 
-    def __init__(self):
-        self.name = "query_tool"
-
-    def invoke(self, sub_queries, top_k):
-        res = []
-
-        for sub_query in sub_queries:
-            sentences = db_helper_obj.split_text_into_sentences(sub_query)
-            vector = db_helper_obj.embed_sentences_openai(sentences)
-
-            if top_k != 0:
-                res.append(db_helper_obj.query_method(vector, top_k))
-            else:
-                res.append(db_helper_obj.query_method(vector))
-        
-        return res
+    if not isinstance(sub_queries, list):
+        raise ValueError("Expected 'sub_queries' to be a list of strings.")
     
-query_tool_obj = QueryTool()
+    res = []
+    for sub_query in sub_queries:
+        sentences = db_helper_obj.split_text_into_sentences(sub_query)
+        vector = db_helper_obj.embed_sentences_openai(sentences)
+
+        if top_k:
+            res.append(db_helper_obj.query_method(vector, top_k))
+        else:
+            res.append(db_helper_obj.query_method(vector))
+    
+    return ToolMessage(name=self.name, content={"results": res})
+
+# print(query_tool.name)
+# print(query_tool.description)
+# print(query_tool.args)
+# print(type(query_tool))

@@ -19,7 +19,7 @@ async def query_endpoint(request: Request):
     try:
         top_k = int(data.get("top_k"))
     except:
-        top_k = 0
+        top_k = False
     res = inference_obj.query_workflow(text, top_k)
 
     # sentences = db_helper_obj.split_text_into_sentences(optimized_query)
