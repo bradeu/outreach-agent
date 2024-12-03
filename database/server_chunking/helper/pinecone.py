@@ -11,7 +11,9 @@ import requests
 # from semantic_router.encoders import OpenAIEncoder
 # from semantic_chunkers import StatisticalChunker
 
-_ = load_dotenv()
+env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+
+_ = load_dotenv(dotenv_path=env_path)
 
 pinecone_api_key = os.getenv('PINECONE_API_KEY')
 openai_api_key = os.getenv('OPENAI_API_KEY')

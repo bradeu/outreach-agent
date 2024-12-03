@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request
-from helper.pinecone import db_helper_obj
-from tool.query_tool import query_tool_obj
-from inference import inference_obj
+from .helper.pinecone import db_helper_obj
+from .inference import inference_obj
 
 app = FastAPI()
 
@@ -16,11 +15,13 @@ async def query_endpoint(request: Request):
     
     # optimized_query = db_helper_obj.send_to_perplexity(text)
 
-    try:
-        top_k = int(data.get("top_k"))
-    except:
-        top_k = False
-    res = inference_obj.query_workflow(text, top_k)
+    # try:
+    #     top_k = int(data.get("top_k"))
+    # except:
+    #     top_k = False
+    # res = inference_obj.query_workflow(text, top_k)
+    
+    res = inference_obj.query_workflow(text)
 
     # sentences = db_helper_obj.split_text_into_sentences(optimized_query)
     # # vector = db_helper_obj.embed_sentences(sentences)
