@@ -2,12 +2,11 @@ import os
 from dotenv import load_dotenv
 from pinecone import Pinecone
 import time
-# from nltk.tokenize import sent_tokenize
+from nltk.tokenize import sent_tokenize
 from sentence_transformers import SentenceTransformer
 import uuid
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
-import requests
 # from semantic_router.encoders import OpenAIEncoder
 # from semantic_chunkers import StatisticalChunker
 
@@ -17,7 +16,6 @@ _ = load_dotenv(dotenv_path=env_path)
 
 pinecone_api_key = os.getenv('PINECONE_API_KEY')
 openai_api_key = os.getenv('OPENAI_API_KEY')
-perplexity_api_key = os.getenv('PERPLEXITY_API_KEY')
 
 pc = Pinecone(api_key=pinecone_api_key)
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
@@ -79,48 +77,12 @@ class Helper:
         return embed_list
 
     def split_text_into_sentences(self, text):
-        # chunks = chunker(docs=[text])
-        # sentences = sent_tokenize(text)
-        docs = text_splitter.create_documents([text])
-        sentences = []
-        for doc in docs:
-            sentences.append(doc.page_content)
+        # chunks = chunker(docs=[text]) # don't use this
+        sentences = sent_tokenize(text)
+        # docs = text_splitter.create_documents([text])
+        # sentences = []
+        # for doc in docs:
+        #     sentences.append(doc.page_content)
         return sentences
-
-    def send_to_perplexity(self, user_query):
-        url = "https://api.perplexity.ai/chat/completions"
-
-        system_content = (
-            "Your task is to improve the following user queries to make them more effective for "
-            "searching in a vector database using OpenAIEmbeddings with a vector dimension of 1536.\n\n"
-            "Instructions:\n"
-            "- Rewrite the query to include related terms if they improve relevance.\n"
-            "- Resolve any ambiguous terms to make the query more specific.\n"
-            "- Focus on key concepts related to the user's intent.\n\n"
-            "Return only the optimized query. Do not provide an answer to the question."
-        )
-
-        payload = {
-            "model": "llama-3.1-sonar-small-128k-chat",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": system_content
-                },
-                {
-                    "role": "user",
-                    "content": user_query
-                }
-            ],
-            "max_tokens": 200,
-        }
-        headers = {
-            "Authorization": f"Bearer {perplexity_api_key}",
-            "Content-Type": "application/json"
-        }
-
-        response = requests.request("POST", url, json=payload, headers=headers)
-        perplexity_data = response.json()
-        return perplexity_data['choices'][0].get('message').get('content')
     
 db_helper_obj = Helper()
