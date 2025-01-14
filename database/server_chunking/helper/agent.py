@@ -25,17 +25,19 @@ class AgentState(TypedDict):
     messages: Annotated[list[AnyMessage], operator.add]
 
 class Agent:
-    def __init__(self, model_query, tool):
+    def __init__(self, model_query, query_tool, filter_tool):
         graph = StateGraph(AgentState)
         graph.add_node("llm_query", self.call_openai_query)
         graph.add_node("search", self.search) # call it search or rag
+        graph.add_node("filter", self.filter)
         graph.add_edge("llm_query", "search")
-        # graph.add_edge("search", "llm_filter")
-        graph.add_edge("search", END)
+        graph.add_edge("search", "filter")
+        graph.add_edge("filter", END)
         graph.set_entry_point("llm_query")
         self.graph = graph.compile()
         self.model_query = model_query
-        self.tool = tool
+        self.query_tool = query_tool
+        self.filter_tool = filter_tool
 
     def call_openai_query(self, state: AgentState):
         messages = state['messages']
@@ -57,12 +59,26 @@ class Agent:
 
         try:
             decomposed_queries = json.loads(ai_message_content)
+            logger.info(f"decomposed_queries: {decomposed_queries}")
         except json.JSONDecodeError:
             print("Error: Failed to parse JSON response.")
 
-        message = self.tool.invoke(decomposed_queries)
+        message = self.query_tool.invoke(decomposed_queries)
         new_state = {'messages': [message]}
         return new_state
     
     def filter(self, state: AgentState):
-        pass
+        logger.info(f"Entering 'filter' with state: {state['messages'][-1].content}")
+        db_content = state['messages'][-1].content
+        results = []
+
+        try:
+            valid_json = db_content.replace("'", '"')
+            decomposed_db_content = json.loads(valid_json)
+            logger.info(f"decomposed_db_content: {decomposed_db_content}")
+        except json.JSONDecodeError:
+            print("Error: Failed to parse JSON response.")
+        
+        message = self.filter_tool.invoke(decomposed_db_content)
+        new_state = {'messages': [message]}
+        return new_state

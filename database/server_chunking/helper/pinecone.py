@@ -38,7 +38,7 @@ class Helper:
             namespace=namespace
         ).to_dict()
 
-    def query_method(self, vector_list, top_k=10, index_name="test2", namespace="ns1"):
+    def query_method(self, vector_list, top_k=3, index_name="test2", namespace="ns1"):
         while not pc.describe_index(index_name).status['ready']:
             time.sleep(1)
 
@@ -57,7 +57,11 @@ class Helper:
 
             for match in res['matches']:
                 if match['id'] not in seen_ids:
-                    result.append(match['metadata']['sentence'])
+                    # result.append(match['metadata']['sentence'])
+                    result.append({
+                        "id": match['id'],
+                        "sentence": match['metadata']['sentence']
+                    })
                     seen_ids.add(match['id'])
 
         return {'similar_sentences' : result}
