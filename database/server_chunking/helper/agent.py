@@ -70,12 +70,13 @@ class Agent:
     def filter(self, state: AgentState):
         logger.info(f"Entering 'filter' with state: {state['messages'][-1].content}")
         db_content = state['messages'][-1].content
-        results = []
+        decomposed_db_content = {"results":[]}
 
         try:
-            valid_json = db_content.replace("'", '"')
+            valid_json = db_content.replace('"s', "'s").replace('\"', '"')
+            logger.info(f"valid_json: {valid_json}")
             decomposed_db_content = json.loads(valid_json)
-            logger.info(f"decomposed_db_content: {decomposed_db_content}")
+            # logger.info(f"decomposed_db_content: {decomposed_db_content}")
         except json.JSONDecodeError:
             print("Error: Failed to parse JSON response.")
         
