@@ -70,15 +70,22 @@ class Agent:
     def filter(self, state: AgentState):
         logger.info(f"Entering 'filter' with state: {state['messages'][-1].content}")
         db_content = state['messages'][-1].content
-        decomposed_db_content = {"results":[]}
+        decomposed_db_content = {"results": []}
 
         try:
-            valid_json = db_content.replace('"s', "'s").replace('\"', '"')
+            # Replace problematic characters in a more reliable way
+            valid_json = (db_content
+                .replace('\\"', '"')        # Replace escaped quotes
+                .replace('"s ', "'s ")      # Replace possessives
+                .replace('"s,', "'s,")      # Replace possessives followed by comma
+                .replace('"s.', "'s.")      # Replace possessives followed by period
+                .replace('"s\n', "'s\n"))   # Replace possessives followed by newline
+            
             logger.info(f"valid_json: {valid_json}")
             decomposed_db_content = json.loads(valid_json)
-            # logger.info(f"decomposed_db_content: {decomposed_db_content}")
-        except json.JSONDecodeError:
-            print("Error: Failed to parse JSON response.")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing JSON: {e}")
+            logger.debug(f"Problematic JSON string: {valid_json}")
         
         message = self.filter_tool.invoke(decomposed_db_content)
         new_state = {'messages': [message]}
