@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import json
 from pydantic import BaseModel
 import logging
+from ast import literal_eval
 
 logger = logging.getLogger("agent_logger")
 logger.setLevel(logging.DEBUG)
@@ -70,22 +71,16 @@ class Agent:
     def filter(self, state: AgentState):
         logger.info(f"Entering 'filter' with state: {state['messages'][-1].content}")
         db_content = state['messages'][-1].content
-        decomposed_db_content = {"results": []}
-
+        
         try:
-            # Replace problematic characters in a more reliable way
-            valid_json = (db_content
-                .replace('\\"', '"')        # Replace escaped quotes
-                .replace('"s ', "'s ")      # Replace possessives
-                .replace('"s,', "'s,")      # Replace possessives followed by comma
-                .replace('"s.', "'s.")      # Replace possessives followed by period
-                .replace('"s\n', "'s\n"))   # Replace possessives followed by newline
-            
-            logger.info(f"valid_json: {valid_json}")
-            decomposed_db_content = json.loads(valid_json)
-        except json.JSONDecodeError as e:
-            logger.error(f"Error parsing JSON: {e}")
-            logger.debug(f"Problematic JSON string: {valid_json}")
+            if isinstance(db_content, str):
+                decomposed_db_content = literal_eval(db_content)
+            else:
+                decomposed_db_content = db_content
+        except (ValueError, SyntaxError) as e:
+            logger.error(f"Error parsing content: {e}")
+            logger.debug(f"Problematic content: {db_content}")
+            decomposed_db_content = {"results": []}
         
         message = self.filter_tool.invoke(decomposed_db_content)
         new_state = {'messages': [message]}
