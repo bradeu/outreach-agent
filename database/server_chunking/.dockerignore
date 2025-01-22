@@ -1,0 +1,7 @@
+*vars/
+Dockerfile
+README.md
+**/.git
+.DS_Store
+.venv/
+__pycache__/
