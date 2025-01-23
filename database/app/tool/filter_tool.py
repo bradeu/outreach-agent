@@ -1,9 +1,10 @@
 from langchain_core.tools import tool
 from langchain_core.messages import ToolMessage
 import uuid
+import asyncio
 
 @tool
-def filter_tool(results: list) -> ToolMessage:
+async def filter_tool(results: list) -> ToolMessage:
     """This is a filter tool"""
 
     if not isinstance(results, list):
@@ -19,4 +20,4 @@ def filter_tool(results: list) -> ToolMessage:
                 seen_ids.add(sentences['id'])
     
     tool_call_id = f"tool_call_{uuid.uuid4()}"
-    return ToolMessage(name=filter_tool.name, content={"results": res}, tool_call_id=tool_call_id)
+    return ToolMessage(name=filter_tool.name, content={"results": res}, tool_call_id=tool_call_id) 

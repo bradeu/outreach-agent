@@ -1,4 +1,4 @@
 # database
 
-- cd server/
+- cd app/
 - fastapi dev main.py

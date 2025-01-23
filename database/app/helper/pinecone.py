@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from pinecone import Pinecone
 import time
+import asyncio
 from nltk.tokenize import sent_tokenize
 from sentence_transformers import SentenceTransformer
 import uuid
@@ -23,48 +24,49 @@ open_ai_embedding = OpenAIEmbeddings(openai_api_key=openai_api_key)
 text_splitter = SemanticChunker(open_ai_embedding, breakpoint_threshold_type="gradient")
 
 class Helper:
-    def upsert_method(self, vector_list, index_name="test2", namespace="ns1"):
-        while not pc.describe_index(index_name).status['ready']:
-            time.sleep(1)
 
-        index = pc.Index(index_name)
+    async def upsert_method(self, vector_list, index_name="test2", namespace="ns1"):
+        try:
+            index = pc.Index(index_name)
+            vectors = []
+            for v in vector_list:
+                vectors.append((str(uuid.uuid4()), v['embedding'], {'sentence': v['sentence']}))
+            
+            return index.upsert(
+                vectors=vectors,
+                namespace=namespace
+            ).to_dict()
+        except Exception as e:
+            # Log the error if needed
+            raise
 
-        vectors = []
-        for v in vector_list:
-            vectors.append((str(uuid.uuid4()), v['embedding'], {'sentence' : v['sentence']}))
+    async def query_method(self, vector_list, top_k=3, index_name="test2", namespace="ns1"):
+        try:
+            index = pc.Index(index_name)
+            result = []
+            seen_ids = set()
+            
+            for v in vector_list:
+                res = index.query(
+                    namespace=namespace,
+                    vector=v['embedding'],
+                    top_k=top_k,
+                    include_values=True,
+                    include_metadata=True,
+                )
 
-        return index.upsert(
-            vectors=vectors,
-            namespace=namespace
-        ).to_dict()
+                for match in res['matches']:
+                    if match['id'] not in seen_ids:
+                        result.append({
+                            "id": match['id'],
+                            "sentence": match['metadata']['sentence']
+                        })
+                        seen_ids.add(match['id'])
 
-    def query_method(self, vector_list, top_k=3, index_name="test2", namespace="ns1"):
-        while not pc.describe_index(index_name).status['ready']:
-            time.sleep(1)
-
-        index = pc.Index(index_name)
-
-        result = []
-        seen_ids = set()
-        for v in vector_list:
-            res = index.query(
-                namespace=namespace,
-                vector=v['embedding'],
-                top_k=top_k,
-                include_values=True,
-                include_metadata=True,
-            )
-
-            for match in res['matches']:
-                if match['id'] not in seen_ids:
-                    # result.append(match['metadata']['sentence'])
-                    result.append({
-                        "id": match['id'],
-                        "sentence": match['metadata']['sentence']
-                    })
-                    seen_ids.add(match['id'])
-
-        return {'similar_sentences' : result}
+            return {'similar_sentences': result}
+        except Exception as e:
+            # Log the error if needed
+            raise
     
     def embed_sentences(self, sentences):
         embeddings = model.encode(sentences)
