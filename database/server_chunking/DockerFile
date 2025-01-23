@@ -1,20 +1,25 @@
 FROM python:3.9-slim
 
-COPY requirements.txt .
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     build-essential \
     python3-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir -r requirements.txt
+    graphviz \
+    graphviz-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY . .
+COPY requirements.txt /app/
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . /app/
+
+ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-ENV PYTHONUNBUFFERED=1
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 
