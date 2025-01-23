@@ -1,5 +1,5 @@
 # Python
-__pycache__/
+# __pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -55,4 +55,4 @@ coverage.xml
 .env.production.local
 
 # Folders
-notebook/
+# notebook/
