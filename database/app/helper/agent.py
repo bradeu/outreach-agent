@@ -54,7 +54,7 @@ class Agent:
         new_state = {'messages': [message]}
         return new_state
     
-    def search(self, state: AgentState):
+    async def search(self, state: AgentState):
         logger.info(f"Entering 'search' with state: {state['messages'][-1]}")
         ai_message_content = state['messages'][-1].json()
 
@@ -64,11 +64,11 @@ class Agent:
         except json.JSONDecodeError:
             print("Error: Failed to parse JSON response.")
 
-        message = self.query_tool.invoke(decomposed_queries)
+        message = await self.query_tool.ainvoke(decomposed_queries)
         new_state = {'messages': [message]}
         return new_state
     
-    def filter(self, state: AgentState):
+    async def filter(self, state: AgentState):
         logger.info(f"Entering 'filter' with state: {state['messages'][-1].content}")
         db_content = state['messages'][-1].content
         
@@ -82,6 +82,6 @@ class Agent:
             logger.debug(f"Problematic content: {db_content}")
             decomposed_db_content = {"results": []}
         
-        message = self.filter_tool.invoke(decomposed_db_content)
+        message = await self.filter_tool.ainvoke(decomposed_db_content)
         new_state = {'messages': [message]}
-        return new_state
+        return new_state 
