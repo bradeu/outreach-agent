@@ -1,4 +1,7 @@
-from app.helper.pinecone import db_helper_obj
+try:
+    from ..helper.pinecone import db_helper_obj
+except ImportError:
+    from helper.pinecone import db_helper_obj
 from langchain_core.tools import tool
 from langchain_core.messages import ToolMessage
 import uuid

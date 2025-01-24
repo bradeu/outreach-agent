@@ -1,8 +1,13 @@
 from langchain_openai import ChatOpenAI
-from app.helper.agent import Agent
+try:
+    from .helper.agent import Agent
+    from .tool.query_tool import query_tool
+    from .tool.filter_tool import filter_tool
+except ImportError:
+    from helper.agent import Agent
+    from tool.query_tool import query_tool
+    from tool.filter_tool import filter_tool
 from langchain_core.messages import HumanMessage
-from app.tool.query_tool import query_tool
-from app.tool.filter_tool import filter_tool
 
 class Inference:
     async def query_workflow(self, user_query):
