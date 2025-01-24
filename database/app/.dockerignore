@@ -5,3 +5,5 @@ README.md
 .DS_Store
 .venv/
 __pycache__/
+# for docker-compose
+!.env
