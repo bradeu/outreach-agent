@@ -1,0 +1,29 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt /app/requirements.txt
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    python3-dev \
+    graphviz \
+    graphviz-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN python -m nltk.downloader punkt punkt_tab
+
+COPY ./__init__.py /app/__init__.py
+COPY ./helper /app/helper
+COPY ./tool /app/tool
+COPY ./inference.py /app/inference.py
+COPY ./main.py /app/main.py
+# COPY ./.env /app/.env
+
+EXPOSE 8000
+
+ENV PYTHONUNBUFFERED=1
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
