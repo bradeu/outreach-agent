@@ -1,6 +1,10 @@
 from fastapi import FastAPI, Request
-from app.helper.pinecone import db_helper_obj
-from app.inference import inference_obj
+try:
+    from .helper.pinecone import db_helper_obj
+    from .inference import inference_obj
+except ImportError:
+    from helper.pinecone import db_helper_obj
+    from inference import inference_obj
 import time
 # from fastapi.middleware.cors import CORSMiddleware
 
