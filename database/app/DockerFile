@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN python -m nltk.downloader punkt punkt_tab
 
 COPY ./__init__.py /app/__init__.py
 COPY ./helper /app/helper
