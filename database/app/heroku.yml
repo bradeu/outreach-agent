@@ -1,0 +1,5 @@
+build:
+  docker:
+    web: app/DockerFile
+  config:
+    WORKDIR: app

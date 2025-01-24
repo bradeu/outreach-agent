@@ -1,5 +1,0 @@
-build:
-  docker:
-    web: database/app/DockerFile
-  config:
-    WORKDIR: database/app
