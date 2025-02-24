@@ -81,7 +81,7 @@ class Helper:
         embed_list = []
         for i in range(len(sentences)):
             # embedding = open_ai_embedding.embed_query(sentences[i])
-            embedding = await asyncio.to_thread(open_ai_embedding.embed_query, sentence[i])
+            embedding = await asyncio.to_thread(open_ai_embedding.embed_query, sentences[i])
             embed_list.append({'embedding' : embedding, 'sentence' : sentences[i]})
         return embed_list
 
