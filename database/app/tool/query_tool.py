@@ -16,8 +16,8 @@ async def query_tool(sub_queries: list) -> ToolMessage:
 
     res = []
     for sub_query in sub_queries:
-        sentences = db_helper_obj.split_text_into_sentences(sub_query)
-        vector = db_helper_obj.embed_sentences_openai(sentences)
+        sentences = await db_helper_obj.split_text_into_sentences(sub_query)
+        vector = await db_helper_obj.embed_sentences_openai(sentences)
         query_result = await db_helper_obj.query_method(vector)
         res.append(query_result)
     
