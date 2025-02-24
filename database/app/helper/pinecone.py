@@ -32,10 +32,14 @@ class Helper:
             for v in vector_list:
                 vectors.append((str(uuid.uuid4()), v['embedding'], {'sentence': v['sentence']}))
             
-            return (await index.upsert(
-                vectors=vectors,
-                namespace=namespace
-            )).to_dict()
+            # return (await index.upsert(
+            #     vectors=vectors,
+            #     namespace=namespace
+            # )).to_dict()
+            
+            return await asyncio.to_thread(
+                lambda: index.upsert(vectors=vectors, namespace=namespace).to_dict()
+            )
 
         except Exception as e:
             # Log the error if needed
@@ -48,12 +52,22 @@ class Helper:
             seen_ids = set()
             
             for v in vector_list:
-                res = await index.query(
-                    namespace=namespace,
-                    vector=v['embedding'],
-                    top_k=top_k,
-                    include_values=True,
-                    include_metadata=True,
+                # res = await index.query(
+                #     namespace=namespace,
+                #     vector=v['embedding'],
+                #     top_k=top_k,
+                #     include_values=True,
+                #     include_metadata=True,
+                # )
+
+                res = await asyncio.to_thread(
+                    lambda: index.query(
+                        namespace=namespace,
+                        vector=v['embedding'],
+                        top_k=top_k,
+                        include_values=True,
+                        include_metadata=True
+                    )
                 )
 
                 for match in res['matches']:
