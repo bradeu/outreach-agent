@@ -32,10 +32,11 @@ class Helper:
             for v in vector_list:
                 vectors.append((str(uuid.uuid4()), v['embedding'], {'sentence': v['sentence']}))
             
-            return index.upsert(
+            return (await index.upsert(
                 vectors=vectors,
                 namespace=namespace
-            ).to_dict()
+            )).to_dict()
+
         except Exception as e:
             # Log the error if needed
             raise
@@ -47,7 +48,7 @@ class Helper:
             seen_ids = set()
             
             for v in vector_list:
-                res = index.query(
+                res = await index.query(
                     namespace=namespace,
                     vector=v['embedding'],
                     top_k=top_k,
@@ -68,27 +69,31 @@ class Helper:
             # Log the error if needed
             raise
     
-    def embed_sentences(self, sentences):
-        embeddings = model.encode(sentences)
+    async def embed_sentences(self, sentences):
+        # embeddings = model.encode(sentences)
+        embeddings = await asyncio.to_thread(model.encode, sentences) 
         embed_list = []
         for i in range(len(embeddings)):
             embed_list.append({'embedding' : embeddings[i], 'sentence' : sentences[i]})
         return embed_list
 
-    def embed_sentences_openai(self, sentences):
+    async def embed_sentences_openai(self, sentences):
         embed_list = []
         for i in range(len(sentences)):
-            embedding = open_ai_embedding.embed_query(sentences[i])
+            # embedding = open_ai_embedding.embed_query(sentences[i])
+            embedding = await asyncio.to_thread(open_ai_embedding.embed_query, sentence[i])
             embed_list.append({'embedding' : embedding, 'sentence' : sentences[i]})
         return embed_list
 
-    def split_text_into_sentences(self, text):
+    async def split_text_into_sentences(self, text):
         # chunks = chunker(docs=[text]) # don't use this
-        sentences = sent_tokenize(text)
         # docs = text_splitter.create_documents([text])
         # sentences = []
         # for doc in docs:
         #     sentences.append(doc.page_content)
+
+        # sentences = sent_tokenize(text)
+        sentences = await asyncio.to_thread(sent_tokenize, text)
         return sentences
     
 db_helper_obj = Helper()

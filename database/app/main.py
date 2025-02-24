@@ -33,8 +33,8 @@ async def upsert_endpoint(request: Request):
     text = data.get("text")
 
     start_time = time.time()
-    sentences = db_helper_obj.split_text_into_sentences(text)
-    vector = db_helper_obj.embed_sentences_openai(sentences)
+    sentences = await db_helper_obj.split_text_into_sentences(text)
+    vector = await db_helper_obj.embed_sentences_openai(sentences)
     res = await db_helper_obj.upsert_method(vector)
     end_time = time.time()
     execution_time = end_time - start_time
