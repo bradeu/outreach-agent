@@ -50,7 +50,7 @@ class Agent:
         )
 
         messages = [SystemMessage(content=system_query)] + messages
-        message = self.model_query.with_structured_output(QueryResponse).invoke(messages)
+        message = await self.model_query.with_structured_output(QueryResponse).ainvoke(messages)
         new_state = {'messages': [message]}
         return new_state
     
