@@ -40,7 +40,7 @@ class Agent:
         self.query_tool = query_tool
         self.filter_tool = filter_tool
 
-    def call_openai_query(self, state: AgentState):
+    async def call_openai_query(self, state: AgentState):
         messages = state['messages']
 
         system_query = (
