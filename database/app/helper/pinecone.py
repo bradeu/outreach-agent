@@ -32,10 +32,14 @@ class Helper:
             for v in vector_list:
                 vectors.append((str(uuid.uuid4()), v['embedding'], {'sentence': v['sentence']}))
             
-            return (await index.upsert(
-                vectors=vectors,
-                namespace=namespace
-            )).to_dict()
+            # return (await index.upsert(
+            #     vectors=vectors,
+            #     namespace=namespace
+            # )).to_dict()
+            
+            return await asyncio.to_thread(
+                lambda: index.upsert(vectors=vectors, namespace=namespace).to_dict()
+            )
 
         except Exception as e:
             # Log the error if needed
@@ -48,12 +52,22 @@ class Helper:
             seen_ids = set()
             
             for v in vector_list:
-                res = await index.query(
-                    namespace=namespace,
-                    vector=v['embedding'],
-                    top_k=top_k,
-                    include_values=True,
-                    include_metadata=True,
+                # res = await index.query(
+                #     namespace=namespace,
+                #     vector=v['embedding'],
+                #     top_k=top_k,
+                #     include_values=True,
+                #     include_metadata=True,
+                # )
+
+                res = await asyncio.to_thread(
+                    lambda: index.query(
+                        namespace=namespace,
+                        vector=v['embedding'],
+                        top_k=top_k,
+                        include_values=True,
+                        include_metadata=True
+                    )
                 )
 
                 for match in res['matches']:
@@ -81,7 +95,7 @@ class Helper:
         embed_list = []
         for i in range(len(sentences)):
             # embedding = open_ai_embedding.embed_query(sentences[i])
-            embedding = await asyncio.to_thread(open_ai_embedding.embed_query, sentence[i])
+            embedding = await asyncio.to_thread(open_ai_embedding.embed_query, sentences[i])
             embed_list.append({'embedding' : embedding, 'sentence' : sentences[i]})
         return embed_list
 
