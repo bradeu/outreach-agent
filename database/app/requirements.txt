@@ -1,3 +1,4 @@
+celery==5.4.0
 datasets==3.0.1
 einops==0.8.0
 email-validator==2.2.0
@@ -20,7 +21,9 @@ pygraphviz==1.11
 python-multipart==0.0.11
 semantic-chunkers==0.0.10
 sentence-transformers==3.1.1
+tavily-python==0.5.0
 tomli==2.0.1
 uvloop==0.20.0
 watchfiles==0.24.0
 websockets==13.1
+wikipedia-api==0.8.1
