@@ -9,6 +9,7 @@ A FastAPI application that provides vector database operations with Pinecone, op
 - **Asynchronous Processing**: Handles large datasets efficiently using Celery
 - **Batch Processing**: Automatically splits large datasets into 1000-record batches (Pinecone's limit)
 - **Task Tracking**: Monitor the status of processing tasks
+- **RESTful API Design**: Clean API structure following REST principles
 
 ## Getting Started
 
@@ -48,10 +49,22 @@ A FastAPI application that provides vector database operations with Pinecone, op
 
 ## API Endpoints
 
-### Query Endpoint
+The API follows RESTful principles with resource-based URLs and HTTP methods to differentiate operations.
+
+### Root Endpoint
 
 ```
-GET /query/
+GET /
+```
+
+Returns basic API information and available endpoints.
+
+### Entity Endpoints
+
+#### Query Entities (GET)
+
+```
+GET /api/v1/entity/
 ```
 
 Performs semantic search against the vector database.
@@ -64,10 +77,10 @@ Performs semantic search against the vector database.
 }
 ```
 
-### Upsert Endpoint
+#### Create Entities (POST)
 
 ```
-POST /upsert/
+POST /api/v1/entity/
 ```
 
 Stores text in the vector database, automatically handling batching for large datasets.
@@ -94,7 +107,7 @@ Stores text in the vector database, automatically handling batching for large da
 ### Task Status Endpoint
 
 ```
-GET /task/{task_id}
+GET /api/v1/task/{task_id}
 ```
 
 Check the status of a processing task.
@@ -116,7 +129,7 @@ Check the status of a processing task.
 
 The application implements a sophisticated batch processing system to handle Pinecone's limit of 1000 records per upsert:
 
-1. When text is submitted to the upsert endpoint, it's split into sentences
+1. When text is submitted to the entity endpoint (POST), it's split into sentences
 2. Sentences are processed in batches of 1000
 3. Each batch is processed asynchronously using Celery tasks
 4. A tracking task monitors the progress of all batches
