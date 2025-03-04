@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, APIRouter
 import uuid
 import logging
 import time
@@ -19,19 +19,31 @@ celery = Celery("executor",
             backend="redis://localhost:6379/0",
             broker="redis://localhost:6379/0")
 
-app = FastAPI()
+app = FastAPI(title="Vector Database API", 
+              description="API for vector database operations with Pinecone",
+              version="1.0.0")
+
+api_router = APIRouter(prefix="/api/v1")
 
 @app.get("/")
-async def root(request: Request):
-    return await request.json()
+async def root():
+    """Root endpoint with API information"""
+    return {
+        "name": "Vector Database API",
+        "version": "1.0.0",
+        "endpoints": {
+            "entity": "/api/v1/entity/",
+            "task": "/api/v1/task/{task_id}"
+        }
+    }
 
-@app.get("/query/")
-async def query_endpoint(request: Request):
-
+@api_router.get("/entity/")
+async def get_entity(request: Request):
     """
-    Endpoint to query the agent.
+    Query the vector database for entities matching the provided text.
+    
+    Uses GET method for retrieval operations.
     """
-
     try:
         data = await request.json()
         text = data.get("text")
@@ -43,33 +55,42 @@ async def query_endpoint(request: Request):
         res = await inference_obj.query_workflow(text)
         end_time = time.time()
         execution_time = end_time - start_time
-        print(f"Execution time: {execution_time} seconds")
+        logger.info(f"Query execution time: {execution_time} seconds")
 
         return res
     except Exception as e:
-        logger.error(f"Error: {e}")
+        logger.error(f"Error in query: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/upsert/")
-async def upsert_endpoint(request: Request):
-    # data = await request.json()
-    # text = data.get("text")
-
-    # start_time = time.time()
-    # sentences = await db_helper_obj.split_text_into_sentences(text)
-    # vector = await db_helper_obj.embed_sentences_openai(sentences)
-    # res = await db_helper_obj.upsert_method(vector)
-    # end_time = time.time()
-    # execution_time = end_time - start_time
-    # print(f"Execution time: {execution_time} seconds")
-
-    # return res
+@api_router.post("/entity/")
+async def create_entity(request: Request):
 
     """
-    Endpoint to upsert text to Pinecone, respecting the 1000 record limit.
-    Splits large batches into smaller ones and processes them using Celery tasks.
+    Store text in the vector database, automatically handling batching.
+    
+    Uses POST method for creation operations.
     """
 
+    # try:
+    #     data = await request.json()
+    #     text = data.get("text")
+
+    #     if not text:
+    #         raise HTTPException(status_code=400, detail="Text is required")
+
+    #     start_time = time.time()
+    #     sentences = await db_helper_obj.split_text_into_sentences(text)
+    #     vector = await db_helper_obj.embed_sentences_openai(sentences)
+    #     res = await db_helper_obj.upsert_method(vector)
+    #     end_time = time.time()
+    #     execution_time = end_time - start_time
+    #     print(f"Execution time: {execution_time} seconds")
+
+    #     return res
+    # except Exception as e:
+    #     logger.error(f"Error in query: {e}")
+    #     raise HTTPException(status_code=500, detail=str(e))
+    
     try:
         task_id = request.headers.get("x-request-id", uuid.uuid4().hex)
         data = await request.json()
@@ -123,10 +144,10 @@ async def upsert_endpoint(request: Request):
             }
             
     except Exception as e:
-        logger.error(f"Error in upsert endpoint: {e}")
+        logger.error(f"Error in upsert: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/task/{task_id}")
+@api_router.get("/task/{task_id}")
 async def get_task_status(task_id: str):
     """
     Check the status of a Celery task.
@@ -155,3 +176,5 @@ async def get_task_status(task_id: str):
     except Exception as e:
         logger.error(f"Error checking task status: {e}")
         raise HTTPException(status_code=500, detail=f"Error checking task status: {str(e)}")
+
+app.include_router(api_router)
