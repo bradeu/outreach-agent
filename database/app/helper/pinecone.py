@@ -24,10 +24,21 @@ open_ai_embedding = OpenAIEmbeddings(openai_api_key=openai_api_key)
 text_splitter = SemanticChunker(open_ai_embedding, breakpoint_threshold_type="gradient")
 
 class Helper:
+    def get_pinecone_index(self, index_name="test2"):
+        """
+        Get a Pinecone index instance for health checks or operations.
+        
+        Args:
+            index_name: Name of the Pinecone index
+            
+        Returns:
+            Pinecone index instance
+        """
+        return pc.Index(index_name)
 
     async def upsert_method(self, vector_list, index_name="test2", namespace="ns1"):
         try:
-            index = pc.Index(index_name)
+            index = self.get_pinecone_index(index_name)
             vectors = []
             for v in vector_list:
                 vectors.append((str(uuid.uuid4()), v['embedding'], {'sentence': v['sentence']}))
@@ -47,7 +58,7 @@ class Helper:
 
     async def query_method(self, vector_list, top_k=3, index_name="test2", namespace="ns1"):
         try:
-            index = pc.Index(index_name)
+            index = self.get_pinecone_index(index_name)
             result = []
             seen_ids = set()
             
