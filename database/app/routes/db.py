@@ -71,33 +71,30 @@ async def create_entity(request: Request):
     except Exception as e:
         logger.error(f"Error in query: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
 
-@router.get("/task/{task_id}")
-async def get_task_status(task_id: str):
+@router.patch("/entity/{entity_id}")
+async def update_entity(entity_id: str, request: Request):
     """
-    Check the status of a Celery task.
+    Update specific fields of an entity in the vector database.
     
-    Args:
-        task_id: The ID of the Celery task
-    
-    Returns:
-        Dict with task status and result if available
+    Uses PATCH method for partial update operations.
     """
     try:
-        task = celery_app.AsyncResult(task_id)
+        data = await request.json()
+        text = data.get("text")
         
-        response = {
-            "task_id": task_id,
-            "status": task.status,
-        }
-        
-        if task.status == 'SUCCESS':
-            response["result"] = task.result
-        
-        if task.status == 'FAILURE':
-            response["error"] = str(task.result)
+        if not text:
+            raise HTTPException(status_code=400, detail="Update data is required")
             
-        return response
+        start_time = time.time()    
+
+        res = await db_helper_obj.update_method(entity_id, text)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        logger.info(f"Update execution time: {execution_time} seconds")
+        
+        return res
     except Exception as e:
-        logger.error(f"Error checking task status: {e}")
-        raise HTTPException(status_code=500, detail=f"Error checking task status: {str(e)}")
+        logger.error(f"Error in update: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

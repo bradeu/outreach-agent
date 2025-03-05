@@ -37,11 +37,27 @@ class Helper:
         return pc.Index(index_name)
 
     async def upsert_method(self, vector_list, index_name="test2", namespace="ns1"):
+
+        """
+        Upsert vectors into Pinecone index.
+
+        Args:
+            vector_list: List of vectors to upsert
+            index_name: Name of the Pinecone index
+            namespace: Namespace for the vectors
+
+        Returns:
+            Dictionary containing the upsert operation result
+        """
+
         try:
             index = self.get_pinecone_index(index_name)
             vectors = []
             for v in vector_list:
-                vectors.append((str(uuid.uuid4()), v['embedding'], {'sentence': v['sentence']}))
+                vectors.append((str(uuid.uuid4()), v['embedding'], {
+                    'entity_id': str(uuid.uuid4()),
+                    'sentence': v['sentence']
+                }))
             
             # return (await index.upsert(
             #     vectors=vectors,
@@ -57,6 +73,20 @@ class Helper:
             raise
 
     async def query_method(self, vector_list, top_k=3, index_name="test2", namespace="ns1"):
+
+        """
+        Query Pinecone index for similar sentences.
+
+        Args:
+            vector_list: List of vectors to query
+            top_k: Number of results to return
+            index_name: Name of the Pinecone index
+            namespace: Namespace for the vectors
+
+        Returns:
+            Dictionary containing the query operation result
+        """
+
         try:
             index = self.get_pinecone_index(index_name)
             result = []
@@ -92,6 +122,31 @@ class Helper:
             return {'similar_sentences': result}
         except Exception as e:
             # Log the error if needed
+            raise
+
+    async def update_method(self, entity_id, text, index_name="test2", namespace="ns1"):
+        """
+        Update a specific entity in the Pinecone index.
+
+        Args:
+            entity_id: ID of the entity to update
+            text: New text for the entity
+            index_name: Name of the Pinecone index
+            namespace: Namespace for the vectors
+
+        Returns:
+            Dictionary containing the update operation result
+        """
+
+        try:
+            index = self.get_pinecone_index(index_name)
+
+            json_dict = json.loads(text)
+
+            return await asyncio.to_thread(
+                lambda: index.update(id=entity_id, set_metadata=json_dict, namespace=namespace).to_dict()
+            )
+        except Exception as e:
             raise
     
     async def embed_sentences(self, sentences):
