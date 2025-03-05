@@ -10,6 +10,7 @@ A FastAPI application that provides vector database operations with Pinecone, op
 - **Batch Processing**: Automatically splits large datasets into 1000-record batches (Pinecone's limit)
 - **Task Tracking**: Monitor the status of processing tasks
 - **RESTful API Design**: Clean API structure following REST principles
+- **Health Monitoring**: Comprehensive health check endpoints for monitoring service status
 
 ## Getting Started
 
@@ -104,24 +105,101 @@ Stores text in the vector database, automatically handling batching for large da
 }
 ```
 
-### Task Status Endpoint
+#### Update Entity (PATCH)
 
 ```
-GET /api/v1/task/{task_id}
+PATCH /api/v1/entity/{entity_id}
 ```
 
-Check the status of a processing task.
+Updates specific fields of an entity in the vector database.
+
+**Request Body:**
+
+```json
+{
+  "text": "Updated text for the entity"
+}
+```
+
+**Response:**
+
+Returns the result of the update operation, typically including confirmation of the update and any relevant metadata.
+
+### Health Check Endpoints
+
+#### Basic Health Check
+
+```
+GET /api/v1/health/
+```
+
+Returns the basic service status.
 
 **Response:**
 
 ```json
 {
-  "task_id": "task-id",
-  "status": "SUCCESS",
-  "result": {
-    "status": "success",
-    "vectors_processed": 1000
-  }
+  "status": "healthy",
+  "timestamp": "2023-07-01T12:34:56.789Z",
+  "service": "database-api"
+}
+```
+
+#### Pinecone Health Check
+
+```
+GET /api/v1/health/pinecone
+```
+
+Checks the connection to Pinecone.
+
+**Response:**
+
+```json
+{
+  "status": "connected",
+  "latency_ms": 123.45,
+  "timestamp": "2023-07-01T12:34:56.789Z"
+}
+```
+
+#### Redis Health Check
+
+```
+GET /api/v1/health/redis
+```
+
+Checks the connection to Redis.
+
+**Response:**
+
+```json
+{
+  "status": "connected",
+  "latency_ms": 12.34,
+  "timestamp": "2023-07-01T12:34:56.789Z"
+}
+```
+
+#### Readiness Check
+
+```
+GET /api/v1/health/readiness
+```
+
+Comprehensive check of all dependencies.
+
+**Response:**
+
+```json
+{
+  "status": "ready",
+  "timestamp": "2023-07-01T12:34:56.789Z",
+  "checks": {
+    "pinecone": "ok",
+    "redis": "ok"
+  },
+  "issues": []
 }
 ```
 
@@ -136,6 +214,14 @@ The application implements a sophisticated batch processing system to handle Pin
 5. The API returns task IDs that can be used to check processing status
 
 This approach allows for efficient processing of large datasets while respecting Pinecone's limitations.
+
+## API Documentation
+
+Interactive API documentation is available at:
+
+- Swagger UI: `/api/docs`
+- ReDoc: `/api/redoc`
+- OpenAPI JSON: `/api/openapi.json`
 
 ## Docker Deployment
 
@@ -156,6 +242,7 @@ This will start:
 - If tasks are not being processed, ensure Redis and Celery workers are running
 - Check Celery logs for detailed error information
 - Verify your Pinecone and OpenAI API keys are correct in the .env file
+- Use the health check endpoints to verify service dependencies
 
 ## License
 
