@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Request, HTTPException
 import logging
-from celery import Celery
 try:
     from .routes import db, health
 except ImportError:
@@ -11,10 +10,6 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-
-celery = Celery("executor",
-            backend="redis://localhost:6379/0",
-            broker="redis://localhost:6379/0")
 
 app = FastAPI(
     title="Vector Database API", 

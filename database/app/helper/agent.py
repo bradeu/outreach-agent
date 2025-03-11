@@ -60,11 +60,13 @@ class Agent:
 
         try:
             decomposed_queries = json.loads(ai_message_content)
-            logger.info(f"decomposed_queries: {decomposed_queries}")
+            logger.info(f"decomposed_queries: {decomposed_queries}, with type: {type(decomposed_queries)}")
         except json.JSONDecodeError:
             print("Error: Failed to parse JSON response.")
 
+        logger.info(f"Entering query tool")
         message = await self.query_tool.ainvoke(decomposed_queries)
+        logger.info(f"message: {message}")
         new_state = {'messages': [message]}
         return new_state
     

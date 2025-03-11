@@ -8,8 +8,12 @@ from sentence_transformers import SentenceTransformer
 import uuid
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
+from datetime import datetime
 # from semantic_router.encoders import OpenAIEncoder
 # from semantic_chunkers import StatisticalChunker
+
+import logging
+logger = logging.getLogger(__name__)
 
 env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 
@@ -24,7 +28,7 @@ open_ai_embedding = OpenAIEmbeddings(openai_api_key=openai_api_key)
 text_splitter = SemanticChunker(open_ai_embedding, breakpoint_threshold_type="gradient")
 
 class Helper:
-    def get_pinecone_index(self, index_name="test2"):
+    def get_pinecone_index(self, index_name="outreach-agent"):
         """
         Get a Pinecone index instance for health checks or operations.
         
@@ -36,7 +40,7 @@ class Helper:
         """
         return pc.Index(index_name)
 
-    async def upsert_method(self, vector_list, index_name="test2", namespace="ns1"):
+    async def upsert_method(self, vector_list, namespace, index_name="outreach-agent", entity_type="company"):
 
         """
         Upsert vectors into Pinecone index.
@@ -56,7 +60,10 @@ class Helper:
             for v in vector_list:
                 vectors.append((str(uuid.uuid4()), v['embedding'], {
                     'entity_id': str(uuid.uuid4()),
-                    'sentence': v['sentence']
+                    'entity_type': entity_type,
+                    'namespace': namespace,
+                    'sentence': v['sentence'],
+                    'created_at': datetime.now().isoformat()
                 }))
             
             # return (await index.upsert(
@@ -69,10 +76,9 @@ class Helper:
             )
 
         except Exception as e:
-            # Log the error if needed
             raise
 
-    async def query_method(self, vector_list, top_k=3, index_name="test2", namespace="ns1"):
+    async def query_method(self, vector_list, namespace, index_name="outreach-agent", top_k=3):
 
         """
         Query Pinecone index for similar sentences.
@@ -91,7 +97,6 @@ class Helper:
             index = self.get_pinecone_index(index_name)
             result = []
             seen_ids = set()
-            
             for v in vector_list:
                 # res = await index.query(
                 #     namespace=namespace,
@@ -106,25 +111,28 @@ class Helper:
                         namespace=namespace,
                         vector=v['embedding'],
                         top_k=top_k,
-                        include_values=True,
+                        include_values=False,
                         include_metadata=True
                     )
                 )
-
                 for match in res['matches']:
                     if match['id'] not in seen_ids:
                         result.append({
                             "id": match['id'],
-                            "sentence": match['metadata']['sentence']
+                            "entity_id": match['metadata']['entity_id'],
+                            "sentence": match['metadata']['sentence'],
+                            "entity_type": match['metadata']['entity_type'],
+                            "namespace": match['metadata']['namespace'],
+                            "created_at": match['metadata']['created_at']
                         })
                         seen_ids.add(match['id'])
 
+            logger.info(f"result: {result}")
             return {'similar_sentences': result}
         except Exception as e:
-            # Log the error if needed
             raise
 
-    async def update_method(self, entity_id, text, index_name="test2", namespace="ns1"):
+    async def update_method(self, entity_id, text, index_name="outreach-agent", namespace="ns1"):
         """
         Update a specific entity in the Pinecone index.
 

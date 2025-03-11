@@ -16,7 +16,15 @@ async def filter_tool(results: list) -> ToolMessage:
     for similar_sentences_json in results:
         for sentences in similar_sentences_json['similar_sentences']:
             if sentences['id'] not in seen_ids:
-                res.append(sentences['sentence'])
+                res.append(
+                    { 
+                        "entity_id": sentences['entity_id'],
+                        "sentence": sentences['sentence'],
+                        "entity_type": sentences['entity_type'],
+                        "namespace": sentences['namespace'],
+                        "created_at": sentences['created_at']
+                    }
+                )
                 seen_ids.add(sentences['id'])
     
     tool_call_id = f"tool_call_{uuid.uuid4()}"

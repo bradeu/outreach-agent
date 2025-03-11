@@ -1,0 +1,48 @@
+// Sample Input JSON for POST /api/v1/entity/
+{
+  "text": "Perpetua Labs is an AI-powered platform that helps businesses automate customer outreach and engagement. Our solution uses advanced natural language processing to personalize communications at scale. We integrate with existing CRM systems to enhance customer relationships and drive business growth."
+}
+
+// Sample Output JSON for POST /api/v1/entity/
+{
+  "upserted_count": 5,
+  "namespace": "ns1",
+  "status": "Success",
+  "message": "Successfully stored 5 text segments in the vector database"
+}
+
+// Sample Input JSON for GET /api/v1/entity/
+{
+  "text": "What solutions does Perpetua offer for customer engagement?"
+}
+
+// Sample Output JSON for GET /api/v1/entity/
+{
+  "similar_sentences": [
+    {
+      "id": "7f8d9e2a-1b3c-4d5e-6f7g-8h9i0j1k2l3m",
+      "sentence": "Perpetua Labs is an AI-powered platform that helps businesses automate customer outreach and engagement."
+    },
+    {
+      "id": "3a4b5c6d-7e8f-9g0h-1i2j-3k4l5m6n7o8p",
+      "sentence": "Our solution uses advanced natural language processing to personalize communications at scale."
+    },
+    {
+      "id": "9q0r1s2t-3u4v-5w6x-7y8z-9a0b1c2d3e4f",
+      "sentence": "We integrate with existing CRM systems to enhance customer relationships and drive business growth."
+    }
+  ]
+}
+
+// Sample Input JSON for PATCH /api/v1/entity/{entity_id}
+{
+  "text": "{\"industry\": \"technology\", \"use_case\": \"customer engagement\", \"priority\": \"high\"}"
+}
+
+// Sample Output JSON for PATCH /api/v1/entity/{entity_id}
+{
+  "updated_count": 1,
+  "namespace": "ns1",
+  "status": "Success",
+  "message": "Successfully updated entity metadata"
+}

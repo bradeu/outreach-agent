@@ -4,10 +4,8 @@ from datetime import datetime
 import logging
 try:
     from ..helper.pinecone import db_helper_obj
-    from ..celery_app import celery_app
 except ImportError:
     from helper.pinecone import db_helper_obj
-    from celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -43,29 +41,6 @@ async def pinecone_health():
         logger.error(f"Pinecone health check failed: {e}")
         raise HTTPException(status_code=503, detail=f"Pinecone connection failed: {str(e)}")
 
-@router.get("/redis")
-async def redis_health():
-    """
-    Check the health of the Redis connection.
-    """
-    try:
-        # Check Redis connection via Celery
-        start_time = time.time()
-        ping_result = celery_app.backend.client.ping()
-        end_time = time.time()
-        
-        if ping_result:
-            return {
-                "status": "connected",
-                "latency_ms": round((end_time - start_time) * 1000, 2),
-                "timestamp": datetime.utcnow().isoformat()
-            }
-        else:
-            raise HTTPException(status_code=503, detail="Redis ping failed")
-    except Exception as e:
-        logger.error(f"Redis health check failed: {e}")
-        raise HTTPException(status_code=503, detail=f"Redis connection failed: {str(e)}")
-
 @router.get("/readiness")
 async def readiness_check():
     """
@@ -80,21 +55,11 @@ async def readiness_check():
         issues.append(f"Pinecone: {str(e)}")
         status = "not_ready"
     
-    try:
-        ping_result = celery_app.backend.client.ping()
-        if not ping_result:
-            issues.append("Redis: ping failed")
-            status = "not_ready"
-    except Exception as e:
-        issues.append(f"Redis: {str(e)}")
-        status = "not_ready"
-    
     return {
         "status": status,
         "timestamp": datetime.utcnow().isoformat(),
         "checks": {
             "pinecone": "ok" if "Pinecone" not in str(issues) else "failed",
-            "redis": "ok" if "Redis" not in str(issues) else "failed"
         },
         "issues": issues
     }
