@@ -1,0 +1,14 @@
+// Sample Input JSON for POST /api/v1/entity/
+{
+  "text": "Perpetua Labs is an AI-powered platform that helps businesses automate customer outreach and engagement. Our solution uses advanced natural language processing to personalize communications at scale. We integrate with existing CRM systems to enhance customer relationships and drive business growth."
+}
+
+// Sample Input JSON for GET /api/v1/entity/
+{
+  "text": "What solutions does Perpetua offer for customer engagement?"
+}
+
+// Sample Input JSON for PATCH /api/v1/entity/{entity_id}
+{
+  "text": "{\"industry\": \"technology\", \"use_case\": \"customer engagement\", \"priority\": \"high\"}"
+}
