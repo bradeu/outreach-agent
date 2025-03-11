@@ -6,7 +6,8 @@ A FastAPI application that provides vector database operations with Pinecone, op
 
 - **Query API**: Semantic search against Pinecone vector database
 - **Upsert API**: Store text data in Pinecone with automatic batching
-- **Asynchronous Processing**: Handles large datasets efficiently using Celery
+- **Update API**: Updates existing entity in the database
+- **Asynchronous Processing**: Handles large datasets efficiently
 - **Batch Processing**: Automatically splits large datasets into 1000-record batches (Pinecone's limit)
 - **Task Tracking**: Monitor the status of processing tasks
 - **RESTful API Design**: Clean API structure following REST principles
@@ -17,7 +18,6 @@ A FastAPI application that provides vector database operations with Pinecone, op
 ### Prerequisites
 
 - Python 3.9+
-- Redis (for Celery task queue)
 - Pinecone account and API key
 - OpenAI API key
 
@@ -33,16 +33,7 @@ A FastAPI application that provides vector database operations with Pinecone, op
    ```
    pip install -r requirements.txt
    ```
-4. Start Redis (required for Celery):
-   ```
-   docker run -d -p 6379:6379 redis:alpine
-   ```
-5. Start the Celery worker:
-   ```
-   cd app/
-   celery -A celery_app worker --loglevel=info
-   ```
-6. Start the FastAPI application:
+4. Start the FastAPI application:
    ```
    cd app/
    fastapi dev main.py
@@ -74,7 +65,31 @@ Performs semantic search against the vector database.
 
 ```json
 {
-  "text": "Your search query here"
+  "text": "Your search query here",
+  "namespace": "company"
+}
+```
+
+**Response:**
+
+```json
+{
+  "results": [
+    {
+      "entity_id": "145359ee-d959-46dc-a4a6-3587d89bca44",
+      "sentence": "Relevant sentence matching your query.",
+      "entity_type": "company",
+      "namespace": "company",
+      "created_at": "2025-03-10T15:15:08.935460"
+    },
+    {
+      "entity_id": "5eadeb84-80b8-44e3-801b-f67e6efefa57",
+      "sentence": "Another relevant sentence matching your query.",
+      "entity_type": "company",
+      "namespace": "company",
+      "created_at": "2025-03-10T15:15:08.935814"
+    }
+  ]
 }
 ```
 
@@ -90,7 +105,9 @@ Stores text in the vector database, automatically handling batching for large da
 
 ```json
 {
-  "text": "Your text to store in the database"
+  "text": "Your text to store in the database",
+  "namespace": "company",
+  "entity_type": "company"
 }
 ```
 
@@ -98,10 +115,7 @@ Stores text in the vector database, automatically handling batching for large da
 
 ```json
 {
-  "status": "processing",
-  "message": "Processing 2500 sentences in 3 batches",
-  "group_task_id": "task-group-id",
-  "batch_task_ids": ["task-id-1", "task-id-2", "task-id-3"]
+  "upserted_count": 7
 }
 ```
 
@@ -163,24 +177,6 @@ Checks the connection to Pinecone.
 }
 ```
 
-#### Redis Health Check
-
-```
-GET /api/v1/health/redis
-```
-
-Checks the connection to Redis.
-
-**Response:**
-
-```json
-{
-  "status": "connected",
-  "latency_ms": 12.34,
-  "timestamp": "2023-07-01T12:34:56.789Z"
-}
-```
-
 #### Readiness Check
 
 ```
@@ -196,24 +192,11 @@ Comprehensive check of all dependencies.
   "status": "ready",
   "timestamp": "2023-07-01T12:34:56.789Z",
   "checks": {
-    "pinecone": "ok",
-    "redis": "ok"
+    "pinecone": "ok"
   },
   "issues": []
 }
 ```
-
-## Batch Processing System
-
-The application implements a sophisticated batch processing system to handle Pinecone's limit of 1000 records per upsert:
-
-1. When text is submitted to the entity endpoint (POST), it's split into sentences
-2. Sentences are processed in batches of 1000
-3. Each batch is processed asynchronously using Celery tasks
-4. A tracking task monitors the progress of all batches
-5. The API returns task IDs that can be used to check processing status
-
-This approach allows for efficient processing of large datasets while respecting Pinecone's limitations.
 
 ## API Documentation
 
@@ -228,19 +211,17 @@ Interactive API documentation is available at:
 You can also run the application using Docker:
 
 ```
+# Option 1: Use the build script
+./build.sh
+
+# Option 2: Use docker-compose directly
 docker-compose up -d
 ```
 
-This will start:
-
-- The FastAPI application
-- Redis for the task queue
-- Celery workers for processing tasks
+This will build and start the FastAPI application.
 
 ## Troubleshooting
 
-- If tasks are not being processed, ensure Redis and Celery workers are running
-- Check Celery logs for detailed error information
 - Verify your Pinecone and OpenAI API keys are correct in the .env file
 - Use the health check endpoints to verify service dependencies
 
