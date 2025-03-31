@@ -15,28 +15,25 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1")
 
-@router.get("/entity/")
-async def get_entity(request: Request):
+
+@router.get("/entities/{entity_id}")
+async def get_entity(entity_id: str, query: str, limit: int = 10):
     """
     Query the vector database for entities matching the provided text.
     
     Uses GET method for retrieval operations.
     """
-
     try:
-        data = await request.json()
-        text = data.get("text")
-        namespace = data.get("namespace")
+        if not query:
+            raise HTTPException(status_code=400, detail="Query is required")
 
-        if not text:
-            raise HTTPException(status_code=400, detail="Text is required")
-
-        if not namespace:
-            raise HTTPException(status_code=400, detail="Namespace is required")
+        if not entity_id:
+            raise HTTPException(status_code=400, detail="Entity ID is required")
 
         start_time = time.time()
-        set_namespace(namespace)
-        res = await inference_obj.query_workflow(text)
+        print(entity_id)
+        set_namespace(entity_id) # entity_id is the namespace
+        res = await inference_obj.query_workflow(query)
         end_time = time.time()
         execution_time = end_time - start_time
         logger.info(f"Query execution time: {execution_time} seconds")
@@ -46,8 +43,8 @@ async def get_entity(request: Request):
         logger.error(f"Error in query: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/entity/")
-async def create_entity(request: Request):
+@router.post("/entities/{entity_id}")
+async def create_entity(entity_id: str, request: Request):
     """
     Store text in the vector database, automatically handling batching.
     
@@ -58,7 +55,7 @@ async def create_entity(request: Request):
         data = await request.json()
         text = data.get("text")
         entity_type = data.get("entity_type")
-        namespace = data.get("namespace")
+        namespace = entity_id
 
         if not text:
             raise HTTPException(status_code=400, detail="Text is required")
@@ -83,30 +80,51 @@ async def create_entity(request: Request):
     except Exception as e:
         logger.error(f"Error in query: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    
 
-@router.patch("/entity/{entity_id}")
-async def update_entity(entity_id: str, request: Request):
+
+@router.get("/entities/person/")
+async def get_entities(personName: str):
     """
-    Update specific fields of an entity in the vector database.
+    Get person's entity_id from the vector database.
     
-    Uses PATCH method for partial update operations.
+    Uses GET method for retrieval operations.
     """
     try:
-        data = await request.json()
-        text = data.get("text")
-        
-        if not text:
-            raise HTTPException(status_code=400, detail="Update data is required")
-            
-        start_time = time.time()    
+        if not personName:
+            raise HTTPException(status_code=400, detail="Person name is required")
 
-        res = await db_helper_obj.update_method(entity_id, text)
+        start_time = time.time()
+        set_namespace("person")
+        res = await inference_obj.query_workflow(personName)
         end_time = time.time()
         execution_time = end_time - start_time
-        logger.info(f"Update execution time: {execution_time} seconds")
-        
+        logger.info(f"Query execution time: {execution_time} seconds")
+
         return res
     except Exception as e:
-        logger.error(f"Error in update: {e}")
+        logger.error(f"Error in query: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/entities/company/")
+async def get_entities(companyName: str):
+    """
+    Get company's entity_id from the vector database.
+    
+    Uses GET method for retrieval operations.
+    """
+    try:
+        if not companyName:
+            raise HTTPException(status_code=400, detail="Company name is required")
+
+        start_time = time.time()
+        set_namespace("company")
+        res = await inference_obj.query_workflow(companyName)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        logger.info(f"Query execution time: {execution_time} seconds")
+
+        return res
+    except Exception as e:
+        logger.error(f"Error in query: {e}")
         raise HTTPException(status_code=500, detail=str(e))

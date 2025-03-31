@@ -21,7 +21,6 @@ async def filter_tool(results: list) -> ToolMessage:
                         "entity_id": sentences['entity_id'],
                         "sentence": sentences['sentence'],
                         "entity_type": sentences['entity_type'],
-                        "namespace": sentences['namespace'],
                         "created_at": sentences['created_at']
                     }
                 )
