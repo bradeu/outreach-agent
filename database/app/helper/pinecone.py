@@ -28,7 +28,7 @@ open_ai_embedding = OpenAIEmbeddings(openai_api_key=openai_api_key)
 text_splitter = SemanticChunker(open_ai_embedding, breakpoint_threshold_type="gradient")
 
 class Helper:
-    def get_pinecone_index(self, index_name="outreach-agent"):
+    async def get_pinecone_index(self, index_name="outreach-agent"):
         """
         Get a Pinecone index instance for health checks or operations.
         
@@ -38,7 +38,7 @@ class Helper:
         Returns:
             Pinecone index instance
         """
-        return pc.Index(index_name)
+        return await asyncio.to_thread(pc.Index, index_name)
 
     async def upsert_method(self, vector_list, namespace, index_name="outreach-agent", entity_type="company"):
 
@@ -55,7 +55,7 @@ class Helper:
         """
 
         try:
-            index = self.get_pinecone_index(index_name)
+            index = await self.get_pinecone_index(index_name)
             vectors = []
             for v in vector_list:
                 vectors.append((str(uuid.uuid4()), v['embedding'], {
@@ -93,7 +93,7 @@ class Helper:
         """
 
         try:
-            index = self.get_pinecone_index(index_name)
+            index = await self.get_pinecone_index(index_name)
             result = []
             seen_ids = set()
             for v in vector_list:
@@ -129,31 +129,6 @@ class Helper:
 
             logger.info(f"result: {result}")
             return {'similar_sentences': result}
-        except Exception as e:
-            raise
-
-    async def update_method(self, entity_id, text, index_name="outreach-agent", namespace="ns1"):
-        """
-        Update a specific entity in the Pinecone index.
-
-        Args:
-            entity_id: ID of the entity to update
-            text: New text for the entity
-            index_name: Name of the Pinecone index
-            namespace: Namespace for the vectors
-
-        Returns:
-            Dictionary containing the update operation result
-        """
-
-        try:
-            index = self.get_pinecone_index(index_name)
-
-            json_dict = json.loads(text)
-
-            return await asyncio.to_thread(
-                lambda: index.update(id=entity_id, set_metadata=json_dict, namespace=namespace).to_dict()
-            )
         except Exception as e:
             raise
     
