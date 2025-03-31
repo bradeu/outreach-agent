@@ -3,14 +3,17 @@ import uuid
 import logging
 import math
 import time
+from fastapi.responses import JSONResponse
 try:
     from ..helper.pinecone import db_helper_obj
     from ..inference import inference_obj
     from ..helper.global_variable import set_namespace, set_limit
+    from ..helper.deduplication import deduplication_obj
 except ImportError:
     from helper.pinecone import db_helper_obj
     from inference import inference_obj
     from helper.global_variable import set_namespace, set_limit
+    from helper.deduplication import deduplication_obj
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1")
@@ -39,7 +42,7 @@ async def get_entity(entity_id: str, query: str, limit: int):
         execution_time = end_time - start_time
         logger.info(f"Query execution time: {execution_time} seconds")
 
-        return res
+        return JSONResponse(content={"Results": res}, status_code=200)
     except Exception as e:
         logger.error(f"Error in query: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -56,7 +59,7 @@ async def create_entity(entity_id: str, request: Request):
         data = await request.json()
         text = data.get("text")
         entity_type = data.get("entity_type")
-        namespace = entity_id
+        namespace = await deduplication_obj.deduplicate_entity_id(entity_id)
 
         if not text:
             raise HTTPException(status_code=400, detail="Text is required")
@@ -76,56 +79,46 @@ async def create_entity(entity_id: str, request: Request):
         end_time = time.time()
         execution_time = end_time - start_time
         logger.info(f"Execution time: {execution_time} seconds")
-
-        return res
+        logger.info(f"res: {res}")
+        return JSONResponse(content={"Message": "Successfully upserted"}, status_code=200)
     except Exception as e:
         logger.error(f"Error in query: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/entities/entity_id/")
+async def get_entity_id():
+    """
+    Get all of the entity_ids from the vector database.
+    
+    Uses GET method for retrieval operations.
+    """
+
+    logger.info(f"Getting entity_ids")
+
+    try:
+        json = {
+            "status": "success",
+            "entity_ids": await deduplication_obj.get_entity_ids()
+        }
+        return json
+    except Exception as e:
+        logger.error(f"Error in query: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/entities/person/")
-async def get_entities(personName: str):
+async def get_person_entities(personName: str, limit: int = 10):
     """
-    Get person's entity_id from the vector database.
+    Get every entity_id of type person from the vector database.
     
     Uses GET method for retrieval operations.
     """
-    try:
-        if not personName:
-            raise HTTPException(status_code=400, detail="Person name is required")
-
-        start_time = time.time()
-        set_namespace("person")
-        res = await inference_obj.query_workflow(personName)
-        end_time = time.time()
-        execution_time = end_time - start_time
-        logger.info(f"Query execution time: {execution_time} seconds")
-
-        return res
-    except Exception as e:
-        logger.error(f"Error in query: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+    return "person"
 
 @router.get("/entities/company/")
-async def get_entities(companyName: str):
+async def get_company_entities(companyName: str, limit: int = 10):
     """
-    Get company's entity_id from the vector database.
+    Get every entity_id of type company from the vector database.
     
     Uses GET method for retrieval operations.
     """
-    try:
-        if not companyName:
-            raise HTTPException(status_code=400, detail="Company name is required")
-
-        start_time = time.time()
-        set_namespace("company")
-        res = await inference_obj.query_workflow(companyName)
-        end_time = time.time()
-        execution_time = end_time - start_time
-        logger.info(f"Query execution time: {execution_time} seconds")
-
-        return res
-    except Exception as e:
-        logger.error(f"Error in query: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return "company"
