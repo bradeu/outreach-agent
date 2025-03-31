@@ -59,9 +59,8 @@ class Helper:
             vectors = []
             for v in vector_list:
                 vectors.append((str(uuid.uuid4()), v['embedding'], {
-                    'entity_id': str(uuid.uuid4()),
+                    'entity_id': namespace,
                     'entity_type': entity_type,
-                    'namespace': namespace,
                     'sentence': v['sentence'],
                     'created_at': datetime.now().isoformat()
                 }))
@@ -106,6 +105,8 @@ class Helper:
                 #     include_metadata=True,
                 # )
 
+                logger.info(f"entering index query")
+
                 res = await asyncio.to_thread(
                     lambda: index.query(
                         namespace=namespace,
@@ -122,7 +123,6 @@ class Helper:
                             "entity_id": match['metadata']['entity_id'],
                             "sentence": match['metadata']['sentence'],
                             "entity_type": match['metadata']['entity_type'],
-                            "namespace": match['metadata']['namespace'],
                             "created_at": match['metadata']['created_at']
                         })
                         seen_ids.add(match['id'])

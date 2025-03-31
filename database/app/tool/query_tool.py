@@ -27,6 +27,7 @@ async def query_tool(sub_queries: list) -> ToolMessage:
     for sub_query in sub_queries:
         sentences = await db_helper_obj.split_text_into_sentences(sub_query)
         vector = await db_helper_obj.embed_sentences_openai(sentences)
+        logger.info(f"entering query_method")
         query_result = await db_helper_obj.query_method(vector, namespace)
         logger.info(f"query_result: {query_result}")
         res.append(query_result)
