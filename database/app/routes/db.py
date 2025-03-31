@@ -6,18 +6,18 @@ import time
 try:
     from ..helper.pinecone import db_helper_obj
     from ..inference import inference_obj
-    from ..helper.namespace import set_namespace
+    from ..helper.global_variable import set_namespace, set_limit
 except ImportError:
     from helper.pinecone import db_helper_obj
     from inference import inference_obj
-    from helper.namespace import set_namespace
+    from helper.global_variable import set_namespace, set_limit
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1")
 
 
 @router.get("/entities/{entity_id}")
-async def get_entity(entity_id: str, query: str, limit: int = 10):
+async def get_entity(entity_id: str, query: str, limit: int):
     """
     Query the vector database for entities matching the provided text.
     
@@ -33,6 +33,7 @@ async def get_entity(entity_id: str, query: str, limit: int = 10):
         start_time = time.time()
         print(entity_id)
         set_namespace(entity_id) # entity_id is the namespace
+        set_limit(limit)
         res = await inference_obj.query_workflow(query)
         end_time = time.time()
         execution_time = end_time - start_time

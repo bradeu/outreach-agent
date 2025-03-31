@@ -1,9 +1,9 @@
 try:
     from ..helper.pinecone import db_helper_obj
-    from ..helper.namespace import get_namespace    
+    from ..helper.global_variable import get_namespace, get_limit
 except ImportError:
     from helper.pinecone import db_helper_obj
-    from helper.namespace import get_namespace
+    from helper.global_variable import get_namespace, get_limit
 from langchain_core.tools import tool
 from langchain_core.messages import ToolMessage
 import uuid
@@ -22,13 +22,14 @@ async def query_tool(sub_queries: list) -> ToolMessage:
         raise ValueError("Expected 'sub_queries' to be a list of strings.")
 
     namespace = get_namespace()
+    limit = get_limit()
     logger.info(f"namespace: {namespace}")
     res = []
     for sub_query in sub_queries:
         sentences = await db_helper_obj.split_text_into_sentences(sub_query)
         vector = await db_helper_obj.embed_sentences_openai(sentences)
         logger.info(f"entering query_method")
-        query_result = await db_helper_obj.query_method(vector, namespace)
+        query_result = await db_helper_obj.query_method(vector, namespace, limit)
         logger.info(f"query_result: {query_result}")
         res.append(query_result)
     
