@@ -77,14 +77,14 @@ class Helper:
         except Exception as e:
             raise
 
-    async def query_method(self, vector_list, namespace, index_name="outreach-agent", top_k=3):
+    async def query_method(self, vector_list, namespace, limit, index_name="outreach-agent"):
 
         """
         Query Pinecone index for similar sentences.
 
         Args:
             vector_list: List of vectors to query
-            top_k: Number of results to return
+            limit: Number of results to return
             index_name: Name of the Pinecone index
             namespace: Namespace for the vectors
 
@@ -111,7 +111,7 @@ class Helper:
                     lambda: index.query(
                         namespace=namespace,
                         vector=v['embedding'],
-                        top_k=top_k,
+                        top_k=limit,
                         include_values=False,
                         include_metadata=True
                     )
